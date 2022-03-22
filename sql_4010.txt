@@ -1,0 +1,151 @@
+SELECT																																		
+	t_in_out_whse_schedule.auto_id,
+	t_sales_order_dtl.auto_id,
+	t_purchase_order_dtl.auto_id,
+	t_in_whse_result.auto_id,
+	m_quantity_unit.auto_id,
+	m_local_biz_partner_customer.auto_id,
+	m_local_biz_partner_seller.auto_id ,
+	t_psi_crt_header.auto_id,
+	m_ttcg_parts.auto_id,
+	t_in_out_whse_schedule.in_out_whse_schedule_no																																	
+	,
+	t_in_out_whse_schedule.dtl_no
+	,t_in_out_whse_schedule.shipment_advisability_sts
+	,t_in_out_whse_schedule.operation_type
+	,t_in_out_whse_schedule.register_type
+	,t_in_out_whse_schedule.registration_source_type
+	,t_in_out_whse_schedule.update_function_id
+	,t_in_out_whse_schedule.update_by
+	,t_in_out_whse_schedule.update_at
+	,m_local_biz_partner_customer.jp_biz_partner_nm
+	,t_in_out_whse_schedule.hs_cd_grant_request_flg
+	,t_in_out_whse_schedule.shipment_pending_comment
+	,t_in_out_whse_schedule.purchase_order_no																																	
+	,m_local_biz_partner_seller.jp_biz_partner_nm
+	,m_local_biz_partner_customer.jp_biz_partner_nm AS customer_biz_partner_nm																	
+	,
+	t_psi_crt_header.dest_country_cd																																	
+	,
+	t_in_out_whse_schedule.classification_result_type																																	
+	,
+	t_in_out_whse_schedule.shipment_possible_exec_date																																	
+	,
+	IFNULL(t_in_whse_result.in_whse_result_date, t_in_out_whse_schedule.in_whse_schedule_date) AS in_whse_date							
+	,
+	t_in_out_whse_schedule.in_whse_schedule_date																																	
+	,
+	t_in_out_whse_schedule.out_whse_schedule_date																																	
+	,
+	t_in_out_whse_schedule.en_parts_nm AS parts_nm																	
+	,
+	m_local_biz_partner_seller.jp_biz_partner_nm AS seller_biz_partner_nm																	
+	,
+	t_in_out_whse_schedule.glb_parts_no																																	
+	,
+	t_in_out_whse_schedule.in_whse_schedule_quantity																																	
+	,
+	m_quantity_unit.jp_display_unit_nm AS display_unit_nm																	
+	,
+	t_purchase_order_dtl.purchase_order_unit																																	
+	,
+	(t_in_out_whse_schedule.in_whse_schedule_quantity * t_purchase_order_dtl.purchase_order_unit) AS purchase_price																																	
+	,
+	t_in_out_whse_schedule.material																																	
+	,
+	t_in_out_whse_schedule.mnfct_parts_model																																	
+	,
+	t_in_out_whse_schedule.hs_cd																																	
+	,
+	t_sales_order_dtl.equipment_nm																											
+	,
+	t_in_out_whse_schedule.update_at																																	
+	,
+	m_ttcg_parts.classification_sheet_file_path																																	
+	,
+	t_in_out_whse_schedule.sts, 
+(CASE 																															
+				WHEN t_in_out_whse_schedule.sts = '10'
+		AND t_in_out_whse_schedule.in_whse_schedule_date <= m_ttcg_base_biz_day_cal.calendar_date																												
+				THEN 1
+		ELSE 0
+	END) AS three_days_before_warehousing,																															
+	CURRENT_TIMESTAMP as base_time																																	
+	,
+	t_in_out_whse_schedule.update_at,
+	m_ttcg_base_biz_day_cal.calendar_date 
+FROM																																		
+	t_in_out_whse_schedule AS t_in_out_whse_schedule																																
+INNER JOIN t_sales_order_dtl ON	
+	t_in_out_whse_schedule.sales_order_no = t_sales_order_dtl.sales_order_no 
+	AND t_in_out_whse_schedule.sales_order_dtl_no = t_sales_order_dtl.sales_order_dtl_no
+	AND t_sales_order_dtl.is_deleted = "0"
+INNER JOIN t_purchase_order_dtl ON																																		
+	t_in_out_whse_schedule.purchase_order_no = t_purchase_order_dtl.purchase_order_no
+	AND t_in_out_whse_schedule.purchase_order_dtl_no = t_purchase_order_dtl.purchase_order_dtl_no
+	AND t_purchase_order_dtl.is_deleted = "0"
+LEFT OUTER JOIN t_in_whse_result ON																																		
+	t_in_out_whse_schedule.in_out_whse_schedule_no = t_in_whse_result.in_out_whse_schedule_no
+	AND t_in_out_whse_schedule.dtl_no = t_in_whse_result.dtl_no
+	AND t_in_whse_result.is_deleted = "0"																													
+INNER JOIN m_quantity_unit ON																																		
+	t_in_out_whse_schedule.quantity_unit_cd = m_quantity_unit.quantity_unit_cd
+	AND m_quantity_unit.is_deleted = "0"
+INNER JOIN m_local_biz_partner AS m_local_biz_partner_customer ON																																		
+	t_in_out_whse_schedule.own_ttcg_company_cd = m_local_biz_partner_customer.ttcg_company_cd
+	AND t_in_out_whse_schedule.eur_glb_biz_partner_cd =  m_local_biz_partner_customer.glb_biz_partner_cd
+	AND m_local_biz_partner_customer.is_deleted = "0"
+INNER JOIN m_local_biz_partner AS m_local_biz_partner_seller ON																																		
+	t_in_out_whse_schedule.own_ttcg_company_cd = m_local_biz_partner_seller.ttcg_company_cd
+	AND t_in_out_whse_schedule.sales_glb_biz_partner_cd = m_local_biz_partner_seller.glb_biz_partner_cd
+	AND m_local_biz_partner_seller.is_deleted = "0"
+LEFT OUTER JOIN t_psi_crt_header ON																																		
+	t_in_out_whse_schedule.psi_crt_no = t_psi_crt_header.psi_crt_no
+	AND t_psi_crt_header.is_deleted = "0"
+LEFT OUTER JOIN m_ttcg_parts ON																																		
+	t_in_out_whse_schedule.own_ttcg_company_cd = m_ttcg_parts.ttcg_company_cd
+	AND t_in_out_whse_schedule.glb_parts_no = m_ttcg_parts.glb_parts_no
+	AND m_ttcg_parts.is_deleted = "0"
+LEFT OUTER JOIN 																																		
+				(
+	SELECT 																														
+					m_ttcg_base_biz_day_cal.calendar_date
+	FROM																														
+					m_ttcg_base_biz_day_cal
+	INNER JOIN m_ttcg_biz_day ON
+		m_ttcg_biz_day.ttcg_company_cd = 'S005'
+		AND m_ttcg_biz_day.is_deleted = '0'
+	WHERE
+		m_ttcg_base_biz_day_cal.ttcg_company_cd = 'S005'
+		AND m_ttcg_base_biz_day_cal.ttcg_base_cd = '0002'
+		AND m_ttcg_base_biz_day_cal.biz_day_flg = 1
+		AND m_ttcg_base_biz_day_cal.is_deleted = 0
+		AND m_ttcg_base_biz_day_cal.calendar_date >= m_ttcg_biz_day.biz_date
+	ORDER BY
+		calendar_date ASC
+	LIMIT 1 OFFSET 3																														
+				) AS m_ttcg_base_biz_day_cal																														
+				ON
+	1 = 1
+WHERE		
+ t_in_out_whse_schedule.is_deleted ='0' 
+	 AND 	t_in_out_whse_schedule.own_ttcg_company_cd ='S005'							
+AND	t_in_out_whse_schedule.moving_turn=	1														
+AND		(
+			(t_in_out_whse_schedule.classification_result_type	=	 11
+				AND		t_sales_order_dtl.separate_exp_license_no IS NOT NULL)
+			OR	t_in_out_whse_schedule.classification_result_type	=	19
+			OR	(t_in_out_whse_schedule.classification_result_type	=	21	
+				AND		(t_sales_order_dtl.inclusion_exp_license_no	IS NOT NULL				
+				OR	t_sales_order_dtl.separate_exp_license_no IS NOT NULL))
+			OR	(t_in_out_whse_schedule.classification_result_type = 22	
+				AND		t_sales_order_dtl.inclusion_exp_license_no	IS NOT NULL)
+			OR	(t_in_out_whse_schedule.classification_result_type =23	
+				AND		(t_sales_order_dtl.inclusion_exp_license_no	IS NOT NULL				
+				OR	t_sales_order_dtl.separate_exp_license_no IS NOT NULL))
+			OR	(t_in_out_whse_schedule.classification_result_type	=	29	
+				AND		(t_sales_order_dtl.inclusion_exp_license_no	 IS NOT NULL				
+				OR	t_sales_order_dtl.separate_exp_license_no	IS NOT NULL))				
+		)																																					
+			
+			
